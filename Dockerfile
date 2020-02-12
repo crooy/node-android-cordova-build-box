@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
-MAINTAINER Ming Chen
+MAINTAINER Manish Kumar
 
 ENV ANDROID_HOME="/opt/android-sdk" \
     ANDROID_NDK="/opt/android-ndk" \
@@ -14,7 +14,7 @@ ENV ANDROID_SDK_TOOLS_VERSION="4333796"
 ENV ANDROID_NDK_VERSION="20"
 
 # nodejs version
-ENV NODE_VERSION="10.x"
+ENV NODE_VERSION="12.x"
 
 # Set locale
 ENV LANG="en_US.UTF-8" \
@@ -44,6 +44,7 @@ RUN apt-get update -qq > /dev/null && \
     apt-get install -qq --no-install-recommends \
         build-essential \
         autoconf \
+        libtool \
         curl \
         git \
         file \
