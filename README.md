@@ -1,7 +1,6 @@
 # Docker Android Build Box
 
-[![docker icon](https://dockeri.co/image/mingc/android-build-box)](https://hub.docker.com/r/mingc/android-build-box/)
-[![Build Status](https://travis-ci.org/mingchen/docker-android-build-box.svg?branch=master)](https://travis-ci.org/mingchen/docker-android-build-box)
+[![docker icon](https://dockeri.co/image/mib200/node-android-cordova-build-box)](https://hub.docker.com/r/mib200/node-android-cordova-build-box/)
 
 
 ## Introduction
@@ -46,11 +45,11 @@ It includes the following components:
 
 ## Pull Docker Image
 
-The docker image is publicly automated build on [Docker Hub](https://hub.docker.com/r/mingc/android-build-box/) based on the Dockerfile in this repo, so there is no hidden stuff in it. To pull the latest docker image:
+The docker image is publicly automated build on [Docker Hub](https://hub.docker.com/r/mib200/node-android-cordova-build-box/) based on the Dockerfile in this repo, so there is no hidden stuff in it. To pull the latest docker image:
 
-    docker pull mingc/android-build-box:latest
+    docker pull mib200/node-android-cordova-build-box:latest
 
-**Hint:** Use tag to sepecific a stable version rather than `latest` of docker image to avoid break your buid. e.g. `mingc/android-build-box:1.12.0`. Checkout **Tags** (bottom of this page) to see all the available tags.
+**Hint:** Use tag to sepecific a stable version rather than `latest` of docker image to avoid break your buid. e.g. `mib200/node-android-cordova-build-box:1.12.0`. Checkout **Tags** (bottom of this page) to see all the available tags.
 
 ## Usage
 
@@ -59,11 +58,11 @@ The docker image is publicly automated build on [Docker Hub](https://hub.docker.
 You can use this docker image to build your Android project with a single docker command:
 
     cd <android project directory>  # change working directory to your project root directory.
-    docker run --rm -v `pwd`:/project mingc/android-build-box bash -c 'cd /project; ./gradlew build'
+    docker run --rm -v `pwd`:/project mib200/node-android-cordova-build-box bash -c 'cd /project; ./gradlew build'
 
 Run docker image with interactive bash shell:
 
-    docker run -v `pwd`:/project -it mingc/android-build-box bash
+    docker run -v `pwd`:/project -it mib200/node-android-cordova-build-box bash
 
 
 ### Use the image for a Bitbucket pipeline
@@ -71,7 +70,7 @@ Run docker image with interactive bash shell:
 If you have an Android project in a Bitbucket repository and want to use its pipeline to build it, you can simply specify this docker image.
 Here is an example of `bitbucket-pipelines.yml`
 
-    image: mingc/android-build-box:latest
+    image: mib200/node-android-cordova-build-box:latest
 
     pipelines:
       default:
@@ -112,7 +111,7 @@ echo "no" | avdmanager create avd \
 $ANDROID_HOME/emulator/emulator -avd Android_4.1_API_16 -no-skin -no-audio -no-window -no-boot-anim -gpu off &
 ```
 
-Note that x86_64 emulators are not currently supported. See [Issue #18](https://github.com/mingchen/docker-android-build-box/issues/18) for details.
+Note that x86_64 emulators are not currently supported. See [Issue #18](https://github.com/mib200/node-android-cordova-build-box/issues/18) for details.
 
 ## Docker Build Image
 
@@ -123,7 +122,7 @@ The image itself is more than 5 GB, check your free disk space before building i
 
 ## Tags
 
-Use tag to sepecific a stable version rather than `latest` of docker image to avoid break your buid. e.g. `mingc/android-build-box:1.12.0`
+Use tag to sepecific a stable version rather than `latest` of docker image to avoid break your buid. e.g. `mib200/node-android-cordova-build-box:1.12.0`
 
 ### 1.12.0
 
@@ -213,7 +212,7 @@ Use tag to sepecific a stable version rather than `latest` of docker image to av
 
 ## Contribution
 
-If you want to enhance this docker image or fix something, feel free to send [pull request](https://github.com/mingchen/docker-android-build-box/pull/new/master).
+If you want to enhance this docker image or fix something, feel free to send [pull request](https://github.com/mib200/node-android-cordova-build-box/pull/new/master).
 
 
 ## References
