@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM node:12
 
 MAINTAINER Manish Kumar
 
@@ -13,15 +13,13 @@ ENV ANDROID_SDK_TOOLS_VERSION="4333796"
 # Get the latest version from https://developer.android.com/ndk/downloads/index.html
 ENV ANDROID_NDK_VERSION="20"
 
-# nodejs version
-ENV NODE_VERSION="12.x"
-
 # Set locale
 ENV LANG="en_US.UTF-8" \
     LANGUAGE="en_US.UTF-8" \
     LC_ALL="en_US.UTF-8"
 
-RUN apt-get clean && apt-get update -qq && apt-get install -qq -y apt-utils locales && locale-gen $LANG
+RUN wget -qO - https://raw.githubusercontent.com/yarnpkg/releases/gh-pages/debian/pubkey.gpg | apt-key add -
+RUN apt-get clean && apt-get update && apt-get install -y apt-utils locales && locale-gen $LANG
 
 ENV DEBIAN_FRONTEND="noninteractive" \
     TERM=dumb \
@@ -38,14 +36,15 @@ COPY README.md /README.md
 WORKDIR /tmp
 
 # Installing packages
-RUN apt-get update -qq > /dev/null && \
-    apt-get install -qq locales > /dev/null && \
-    locale-gen "$LANG" > /dev/null && \
-    apt-get install -qq --no-install-recommends \
+RUN apt-get update && \
+    apt-get install locales && \
+    locale-gen "$LANG" && \
+    apt-get install \
         build-essential \
         autoconf \
         libtool \
         nasm \
+        automake \
         curl \
         git \
         file \
@@ -62,6 +61,7 @@ RUN apt-get update -qq > /dev/null && \
         libmpfr-dev \
         libxslt-dev \
         libxml2-dev \
+        libpng-dev \
         m4 \
         ncurses-dev \
         ocaml \
@@ -74,123 +74,119 @@ RUN apt-get update -qq > /dev/null && \
         unzip \
         wget \
         zip \
-        zlib1g-dev > /dev/null && \
+        zlib1g-dev && \
     echo "Installing nodejs, npm, cordova, ionic, react-native" && \
-    curl -sL -k https://deb.nodesource.com/setup_${NODE_VERSION} \
-        | bash - > /dev/null && \
-    apt-get install -qq nodejs > /dev/null && \
-    apt-get clean > /dev/null && \
+    apt-get clean && \
     rm -rf /var/lib/apt/lists/ && \
-    npm install --quiet -g npm > /dev/null && \
-    npm install --quiet -g \
+    npm install -g \
         bower cordova eslint gulp \
         ionic jshint karma-cli mocha \
         node-gyp npm-check-updates \
-        react-native-cli > /dev/null && \
-    npm cache clean --force > /dev/null && \
+        react-native-cli && \
+    npm cache clean --force && \
     rm -rf /tmp/* /var/tmp/* && \
     echo "Installing fastlane" && \
-    gem install fastlane --quiet --no-document > /dev/null && \
-    gem install bundler --quiet --no-document > /dev/null
+    gem install fastlane --no-document && \
+    gem install bundler --no-document
 
-# Install Android SDK
-RUN echo "Installing sdk tools ${ANDROID_SDK_TOOLS_VERSION}" && \
-    wget --quiet --output-document=sdk-tools.zip \
-        "https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_SDK_TOOLS_VERSION}.zip" && \
-    mkdir --parents "$ANDROID_HOME" && \
-    unzip -q sdk-tools.zip -d "$ANDROID_HOME" && \
-    rm --force sdk-tools.zip && \
-    echo "Installing ndk r${ANDROID_NDK_VERSION}" && \
-    wget --quiet --output-document=android-ndk.zip \
-    "http://dl.google.com/android/repository/android-ndk-r${ANDROID_NDK_VERSION}-linux-x86_64.zip" && \
-    mkdir --parents "$ANDROID_NDK_HOME" && \
-    unzip -q android-ndk.zip -d "$ANDROID_NDK" && \
-    rm --force android-ndk.zip && \
-# Install SDKs
-# Please keep these in descending order!
-# The `yes` is for accepting all non-standard tool licenses.
-    mkdir --parents "$ANDROID_HOME/.android/" && \
-    echo '### User Sources for Android SDK Manager' > \
-        "$ANDROID_HOME/.android/repositories.cfg" && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager --licenses > /dev/null && \
-    echo "Installing platforms" && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "platforms;android-29" \
-        "platforms;android-28" \
-        "platforms;android-27" \
-        "platforms;android-26" \
-        "platforms;android-25" \
-        "platforms;android-24" \
-        "platforms;android-23" \
-        "platforms;android-22" \
-        "platforms;android-21" \
-        "platforms;android-20" \
-        "platforms;android-19" \
-        "platforms;android-18" \
-        "platforms;android-17" \
-        "platforms;android-16" > /dev/null && \
-    echo "Installing platform tools " && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "platform-tools" > /dev/null && \
-    echo "Installing build tools " && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "build-tools;29.0.2" \
-        "build-tools;28.0.3" "build-tools;28.0.2" \
-        "build-tools;27.0.3" "build-tools;27.0.2" "build-tools;27.0.1" \
-        "build-tools;26.0.2" "build-tools;26.0.1" "build-tools;26.0.0" \
-        "build-tools;25.0.3" "build-tools;25.0.2" \
-        "build-tools;25.0.1" "build-tools;25.0.0" \
-        "build-tools;24.0.3" "build-tools;24.0.2" \
-        "build-tools;24.0.1" "build-tools;24.0.0" > /dev/null && \
-    echo "Installing build tools " && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "build-tools;23.0.3" "build-tools;23.0.2" "build-tools;23.0.1" \
-        "build-tools;22.0.1" \
-        "build-tools;21.1.2" \
-        "build-tools;20.0.0" \
-        "build-tools;19.1.0" \
-        "build-tools;18.1.1" \
-        "build-tools;17.0.0" > /dev/null && \
-    echo "Installing extras " && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "extras;android;m2repository" \
-        "extras;google;m2repository" > /dev/null && \
-    echo "Installing play services " && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "extras;google;google_play_services" \
-        "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2" \
-        "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.1" > /dev/null && \
-    echo "Installing Google APIs" && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
-        "add-ons;addon-google_apis-google-24" \
-        "add-ons;addon-google_apis-google-23" \
-        "add-ons;addon-google_apis-google-22" \
-        "add-ons;addon-google_apis-google-21" \
-        "add-ons;addon-google_apis-google-19" \
-        "add-ons;addon-google_apis-google-18" \
-        "add-ons;addon-google_apis-google-17" \
-        "add-ons;addon-google_apis-google-16" > /dev/null && \
-    echo "Installing emulator " && \
-    yes | "$ANDROID_HOME"/tools/bin/sdkmanager "emulator" > /dev/null && \
-    echo "Installing kotlin" && \
-    wget --quiet -O sdk.install.sh "https://get.sdkman.io" && \
-    bash -c "bash ./sdk.install.sh > /dev/null && source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin" && \
-    rm -f sdk.install.sh && \
-    # Install Flutter sdk
-    cd /opt && \
-    wget --quiet https://storage.googleapis.com/flutter_infra/releases/stable/linux/flutter_linux_v1.5.4-hotfix.2-stable.tar.xz -O flutter.tar.xz && \
-    tar xf flutter.tar.xz && \
-    rm -f flutter.tar.xz && \
-    flutter config --no-analytics
+# # Install Android SDK
+# RUN echo "Installing sdk tools ${ANDROID_SDK_TOOLS_VERSION}" && \
+#     wget --quiet --output-document=sdk-tools.zip \
+#         "https://dl.google.com/android/repository/sdk-tools-linux-${ANDROID_SDK_TOOLS_VERSION}.zip" && \
+#     mkdir --parents "$ANDROID_HOME" && \
+#     unzip -q sdk-tools.zip -d "$ANDROID_HOME" && \
+#     rm --force sdk-tools.zip && \
+#     echo "Installing ndk r${ANDROID_NDK_VERSION}" && \
+#     wget --quiet --output-document=android-ndk.zip \
+#     "http://dl.google.com/android/repository/android-ndk-r${ANDROID_NDK_VERSION}-linux-x86_64.zip" && \
+#     mkdir --parents "$ANDROID_NDK_HOME" && \
+#     unzip -q android-ndk.zip -d "$ANDROID_NDK" && \
+#     rm --force android-ndk.zip && \
+# # Install SDKs
+# # Please keep these in descending order!
+# # The `yes` is for accepting all non-standard tool licenses.
+#     mkdir --parents "$ANDROID_HOME/.android/" && \
+#     echo '### User Sources for Android SDK Manager' > \
+#         "$ANDROID_HOME/.android/repositories.cfg" && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager --licenses > /dev/null && \
+#     echo "Installing platforms" && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "platforms;android-29" \
+#         "platforms;android-28" \
+#         "platforms;android-27" \
+#         "platforms;android-26" \
+#         "platforms;android-25" \
+#         "platforms;android-24" \
+#         "platforms;android-23" \
+#         "platforms;android-22" \
+#         "platforms;android-21" \
+#         "platforms;android-20" \
+#         "platforms;android-19" \
+#         "platforms;android-18" \
+#         "platforms;android-17" \
+#         "platforms;android-16" > /dev/null && \
+#     echo "Installing platform tools " && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "platform-tools" > /dev/null && \
+#     echo "Installing build tools " && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "build-tools;29.0.2" \
+#         "build-tools;28.0.3" "build-tools;28.0.2" \
+#         "build-tools;27.0.3" "build-tools;27.0.2" "build-tools;27.0.1" \
+#         "build-tools;26.0.2" "build-tools;26.0.1" "build-tools;26.0.0" \
+#         "build-tools;25.0.3" "build-tools;25.0.2" \
+#         "build-tools;25.0.1" "build-tools;25.0.0" \
+#         "build-tools;24.0.3" "build-tools;24.0.2" \
+#         "build-tools;24.0.1" "build-tools;24.0.0" > /dev/null && \
+#     echo "Installing build tools " && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "build-tools;23.0.3" "build-tools;23.0.2" "build-tools;23.0.1" \
+#         "build-tools;22.0.1" \
+#         "build-tools;21.1.2" \
+#         "build-tools;20.0.0" \
+#         "build-tools;19.1.0" \
+#         "build-tools;18.1.1" \
+#         "build-tools;17.0.0" > /dev/null && \
+#     echo "Installing extras " && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "extras;android;m2repository" \
+#         "extras;google;m2repository" > /dev/null && \
+#     echo "Installing play services " && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "extras;google;google_play_services" \
+#         "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.2" \
+#         "extras;m2repository;com;android;support;constraint;constraint-layout;1.0.1" > /dev/null && \
+#     echo "Installing Google APIs" && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager \
+#         "add-ons;addon-google_apis-google-24" \
+#         "add-ons;addon-google_apis-google-23" \
+#         "add-ons;addon-google_apis-google-22" \
+#         "add-ons;addon-google_apis-google-21" \
+#         "add-ons;addon-google_apis-google-19" \
+#         "add-ons;addon-google_apis-google-18" \
+#         "add-ons;addon-google_apis-google-17" \
+#         "add-ons;addon-google_apis-google-16" > /dev/null && \
+#     echo "Installing emulator " && \
+#     yes | "$ANDROID_HOME"/tools/bin/sdkmanager "emulator" > /dev/null && \
+#     echo "Installing kotlin" && \
+#     wget --quiet -O sdk.install.sh "https://get.sdkman.io" && \
+#     bash -c "bash ./sdk.install.sh > /dev/null && source ~/.sdkman/bin/sdkman-init.sh && sdk install kotlin" && \
+#     rm -f sdk.install.sh && \
+#     # Install Flutter sdk
+#     cd /opt && \
+#     wget --quiet https://storage.googleapis.com/flutter_infra/releases/stable/linux/flutter_linux_v1.5.4-hotfix.2-stable.tar.xz -O flutter.tar.xz && \
+#     tar xf flutter.tar.xz && \
+#     rm -f flutter.tar.xz && \
+#     flutter config --no-analytics
 
 
-# Copy sdk license agreement files.
-RUN mkdir -p $ANDROID_HOME/licenses
-COPY sdk/licenses/* $ANDROID_HOME/licenses/
+# # Copy sdk license agreement files.
+# RUN mkdir -p $ANDROID_HOME/licenses
+# COPY sdk/licenses/* $ANDROID_HOME/licenses/
 
-# Create some jenkins required directory to allow this image run with Jenkins
-RUN mkdir -p /var/lib/jenkins/workspace
-RUN mkdir -p /home/jenkins
-RUN chmod 777 /home/jenkins
-RUN chmod 777 /var/lib/jenkins/workspace
-RUN chmod 777 $ANDROID_HOME/.android
+# # Create some jenkins required directory to allow this image run with Jenkins
+# RUN mkdir -p /var/lib/jenkins/workspace
+# RUN mkdir -p /home/jenkins
+# RUN chmod 777 /home/jenkins
+# RUN chmod 777 /var/lib/jenkins/workspace
+# RUN chmod 777 $ANDROID_HOME/.android
