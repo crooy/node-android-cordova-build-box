@@ -45,6 +45,7 @@ RUN apt-get update -qq > /dev/null && \
         build-essential \
         autoconf \
         libtool \
+        nasm \
         curl \
         git \
         file \
